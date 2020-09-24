@@ -84,14 +84,11 @@ async def pause(ctx):
 @client.command(pass_context = True)
 async def stop(ctx):
     # get the channel the command came from
-    source = ctx.message.author.voice.channel
+    channel = get(client.voice_clients, guild=ctx.guild)
+    channel_name = channel.channel
 
-    # of all the channels the bot is connected to,
-    # find the one that matches the source of the command
-    for channel in client.voice_clients:
-        if channel.channel == source:
-            # get the player and stop the song
-            channel.stop()
+    # stop playback
+    channel.stop()
 
 @client.command(pass_context = True)
 async def resume(ctx):
