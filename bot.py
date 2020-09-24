@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 from plex_utils import Plex
+from player import Player
 
 
 
@@ -12,6 +13,9 @@ client = commands.Bot(command_prefix = '/')
 
 # Plex object
 plex = Plex()
+
+#  dict of player objects assigned to a channel
+channel_players = {}
 
 # dict storing the channel name
 # and a list of songs to be played
@@ -46,6 +50,11 @@ async def what(ctx):
 @client.command(pass_context = True)
 async def join(ctx):
     channel = ctx.message.author.voice.channel
+    channel_name = channel.name
+
+    channel_players[channel_name] = Player(channel)
+    channel_players[channel_name].__str__()
+
     await channel.connect()
 
 @client.command(pass_context = True)
