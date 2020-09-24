@@ -17,15 +17,15 @@ plex = Plex()
 # and a list of songs to be played
 song_queue = {}
 
-def play_next_song(ctx):
+def play_next_song(channel):
 # get the next song in the channel song queue
-    channel = get(client.voice_clients, guild=ctx.guild)
+    # channel = get(client.voice_clients, guild=ctx.guild)
     channel_name = channel.channel
     if len(song_queue[channel_name]) > 0:
         url = song_queue[channel_name].pop(0)
         print(f'next_song: {url}')
         # play next song
-        channel.play(discord.FFmpegOpusAudio(url), after=lambda e: play_next_song(ctx))
+        channel.play(discord.FFmpegOpusAudio(url), after=lambda e: play_next_song(channel))
 
 @client.event
 async def on_ready():
@@ -58,36 +58,16 @@ async def leave(ctx):
 @client.command(pass_context = True)
 async def play(ctx):
     # get the channel the command came from
-    source = ctx.message.author.voice.channel
+    channel = get(client.voice_clients, guild=ctx.guild)
+    channel_name = channel.channel
 
-    # of all the channels the bot is connected to,
-    # find the one that matches the source of the command
-    for channel in client.voice_clients:
-        if channel.channel == source:
-            # song_arr = []
-            #
-            # for url in urls:
-            #     print (url)
-            #     # get song url from plex
-            #     song = await discord.FFmpegOpusAudio.from_probe(url)
-            #     # store the song in an array
-            #     song_arr.append(song)
+    # get a list of songs to play
+    tracks = plex.get_all_artist_track_urls('berry')
+    # add the songs to the channel's queue
+    song_queue[channel_name] = tracks
 
-            # add channel id and song array to the queue
-
-            # song = get_next_song(channel.channel)
-
-            tracks = plex.get_all_artist_track_urls('berry')
-
-            channel_name = channel.channel
-            song_queue[channel_name] = tracks
-
-            url = song_queue[channel_name].pop(0)
-            # song = await discord.FFmpegOpusAudio.from_probe(url)
-            # print (song)
-            # play next song
-            # channel.play(song, after=lambda e: play_next_song(ctx))
-            channel.play(discord.FFmpegOpusAudio(url), after=lambda e: play_next_song(ctx))
+    # play songs in the channel queue
+    play_next_song(channel)
 
 @client.command(pass_context = True)
 async def pause(ctx):
