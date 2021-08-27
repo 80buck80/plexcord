@@ -20,9 +20,9 @@ from plexapi.myplex import MyPlexAccount
 from plexapi.library import LibrarySection
 
 class Plex():
-    def __init__(self):
-        self.account = MyPlexAccount('bukweet', 'Aa1597350')
-        self.plex = self.account.resource('Monarch').connect()
+    def __init__(self, server, user, password):
+        self.account = MyPlexAccount(user, password)
+        self.plex = self.account.resource(server).connect()
         self.library = self.plex.library.section('Music')
 
 
@@ -66,10 +66,13 @@ class Plex():
 
         # search for the artist
         artist = self.get_artist(artist)
-        tracks = artist.tracks()
-        urls = []
-        for track in tracks:
-            urls.append(track.getStreamURL())
+        if artist:
+            tracks = artist.tracks()
+            urls = []
+            for track in tracks:
+                urls.append(track.getStreamURL())
+        else:
+            return False
 
         if urls:
             return urls

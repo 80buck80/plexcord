@@ -3,18 +3,30 @@ from discord.ext import commands
 from discord.utils import get
 from plex_utils import Plex
 from player import Player
+import yaml
+import logging
 
 
+# set logging level
+logging.basicConfig(level=logging.INFO)
 
-TOKEN = 'NzM0MDk1ODQxNzE4OTYwMTQ5.XxMuBw.0_UMkHua0b3h8eWpFYnEva3TnK4'
+#=======================================================
+# get discord and plex configs from config.yml file
+#=======================================================
+configs = yaml.safe_load(open('./config.yml'))
+
+DISCORD_TOKEN = configs['discord_token']
+PLEX_SERVER = configs['plex_server']
+PLEX_USER = configs['plex_user']
+PLEX_PASSWORD = configs['plex_password']
 
 # discord client object
 client = commands.Bot(command_prefix = '/')
 
 # Plex object
-plex = Plex()
+plex = Plex(PLEX_SERVER, PLEX_USER, PLEX_PASSWORD)
 
-#  dict of player objects assigned to a channel
+# dict of player objects assigned to a channel
 channel_players = {}
 
 # dict storing the channel name
@@ -23,29 +35,24 @@ song_queue = {}
 
 def play_next_song(channel):
 # get the next song in the channel song queue
-    # channel = get(client.voice_clients, guild=ctx.guild)
     channel_name = channel.channel
     if len(song_queue[channel_name]) > 0:
         url = song_queue[channel_name].pop(0)
-        print(f'next_song: {url}')
+        logging.info(f'next_song: {url}')
         # play next song
         channel.play(discord.FFmpegOpusAudio(url), after=lambda e: play_next_song(channel))
 
 @client.event
 async def on_ready():
-    print('It\'s alive!')
-
+    logging.info('It\'s alive!')
+    
 @client.command(pass_context = True)
 async def sandwich(ctx):
-    await ctx.send('Cornbeef on Rye, comming right up!')
+    await ctx.send('Cornbeef on Rye, coming right up!')
 
 @client.command(pass_context = True)
 async def safeword(ctx):
     await ctx.send('Banana')
-
-@client.command(pass_context = True)
-async def what(ctx):
-    await ctx.send(ctx.channel)
 
 @client.command(pass_context = True)
 async def join(ctx):
@@ -65,18 +72,22 @@ async def leave(ctx):
             await channel.disconnect()
 
 @client.command(pass_context = True)
-async def play(ctx):
+async def play(ctx, args):
     # get the channel the command came from
     channel = get(client.voice_clients, guild=ctx.guild)
     channel_name = channel.channel
 
     # get a list of songs to play
-    tracks = plex.get_all_artist_track_urls('berry')
-    # add the songs to the channel's queue
-    song_queue[channel_name] = tracks
+    tracks = plex.get_all_artist_track_urls(args)
+    
+    if not tracks:
+        await ctx.send(f'No songs found for {args}')
+    else:
+        # add the songs to the channel's queue
+        song_queue[channel_name] = tracks
 
-    # play songs in the channel queue
-    play_next_song(channel)
+        # play songs in the channel queue
+        play_next_song(channel)
 
 @client.command(pass_context = True)
 async def pause(ctx):
@@ -111,11 +122,7 @@ async def resume(ctx):
             # get the player and resume the song
             channel.resume()
 
-
-
-
-
-
-
-
-client.run(TOKEN)
+#=========================
+# Run the discord bot
+#=========================
+client.run(DISCORD_TOKEN)
