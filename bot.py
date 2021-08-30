@@ -76,8 +76,8 @@ async def leave(ctx):
 @bot.command(pass_context = True)
 async def play(ctx, *, args):
     # get the channel the command came from
-    channel = get(bot.voice_bots, guild=ctx.guild)
-    channel_name = channel.channel
+    channel = ctx.message.author.voice.channel
+    channel_name = channel.name
 
     # Search plex for artist
     artists = plex.get_artist(args)
@@ -149,10 +149,10 @@ async def play(ctx, *, args):
         # Get a list of album tracks
         tracks = plex.get_album_track_urls(album)            
 
-        # add the songs to the channel's queue
+        # Add the songs to the channel's queue
         song_queue[channel_name] = tracks
 
-        # play songs in the channel queue
+        # Play songs in the channel queue
         play_next_song(channel)
 
         
