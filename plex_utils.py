@@ -29,8 +29,6 @@ class Plex():
     def get_artist(self, artist):
         # user artist arg to search library for an artist
         # search returns a list of artist objects.
-        # It is possible to return more than one artist,
-        # for now we return the fisrt artist object
         search = self.library.searchArtists(title=f'{artist}')
         if search:
             return search
@@ -42,23 +40,23 @@ class Plex():
         # return a list of album objects
         
         # search for the artist
-        artist = self.search_artist(artist) 
         search = artist.albums()
         if search:
             return search
         else:
             return False    
 
-    # def get_album_track_urls(self, artist, album):
-    #     # user artist object to get all tracks from an artist's albums
-    #     # return a list of album objects
-    #
-    #     search = artist.albums()
-    #     if search:
-    #         return search
-    #     else:
-    #         return False
+    def get_album_track_urls(self, album):
+        # use album object to get all tracks from an artist's albums
+        # return a list of track urls
 
+        tracks = album.tracks()
+        urls = []
+        for track in tracks:
+            urls.append(track.getStreamURL()) 
+    
+        return urls
+        
     def get_all_artist_track_urls(self, artist):
         # use artist object to get all tracks from an artist's albums
         # return a list of urls to the tracks

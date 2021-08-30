@@ -79,26 +79,74 @@ async def play(ctx, *, args):
 #    channel = get(bot.voice_bots, guild=ctx.guild)
 #    channel_name = channel.channel
 
+    # Search plex for artist
     artists = plex.get_artist(args)
-    select_options = []
-    for index, artist in enumerate(artists):
-        select_options.append(SelectOption(label=artist.title, value=index))
+    # Check if any artists were found
+    if artists:
+        # If more than one artist is found, send list of artists to pick from
+        if len(artists) > 1:
 
-    await ctx.send(
-        "==== I found multiple artists ====\n Select one from the menu below:", 
-        components=[
-            Select(
-                placeholder="Select and artist",
-                options=select_options,
-                custom_id="select1",
-            ),
-        ],
-    )
-                
-    interaction = await bot.wait_for(
-        "select_option", check=lambda inter: inter.custom_id == "select1"
-    )
-    await interaction.send(content=f"{interaction.values[0]} selected!", ephemeral=False)
+            # Create a list of SelectOption objects
+            select_options = []
+            for index, artist in enumerate(artists):
+                select_options.append(SelectOption(label=artist.title, value=artist.title))
+
+            # Send the list of artists to pick from
+            await ctx.send(
+                "==== I found multiple artists ====", 
+                components=[
+                    Select(
+                        placeholder="Select an artist",
+                        options=select_options,
+                        custom_id="select1",
+                    ),
+                ],
+            )
+
+            # Wait for a response            
+            interaction = await bot.wait_for(
+                "select_option", check=lambda inter: inter.custom_id == "select1"
+            )
+            await interaction.send(content=f"{interaction.values[0]} selected!", ephemeral=False)
+
+            # Get the artist object
+            for artist in artists:
+                if artist.title == interaction.values[0]:
+                    artists = artist
+
+        # Search plex for albums by artist
+        albums = plex.get_albums(artists)
+
+        # If more than one album is found, send list of albums to pick from
+        if len(albums) > 1:
+            select_options = []
+            for index, album in enumerate(albums):
+                select_options.append(SelectOption(label=album.title, value=album.title))
+
+            # Send the list of albums to pick from
+            await ctx.send(
+                "==== I found multiple albums ====", 
+                components=[
+                    Select(
+                        placeholder="Select an album",
+                        options=select_options,
+                        custom_id="select1",
+                    ),
+                ],
+            )
+                        
+            # Wait for a response            
+            interaction = await bot.wait_for(
+                "select_option", check=lambda inter: inter.custom_id == "select1"
+            )
+            await interaction.send(content=f"{interaction.values[0]} selected!", ephemeral=False)
+
+            # Get the artist object
+            for album in albums:
+                if album.title == interaction.values[0]:
+                    albums = album
+
+        
 
 
 @bot.command(pass_context = True)
