@@ -33,23 +33,22 @@ class Plex():
         # for now we return the fisrt artist object
         search = self.library.searchArtists(title=f'{artist}')
         if search:
-            return search[0]
+            return search
         else:
             return False
 
-    # def get_albums(self, artist):
-    #     # user artist object to get all artist albums
-    #     # return a list of album objects
-    #
-    #     # search for the artist
-    #     artist = self.search_artist(artist)
-    #
-    #     search = artist.albums()
-    #     if search:
-    #         return search
-    #     else:
-    #         return False
-    #
+    def get_albums(self, artist):
+        # use artist object to get all artist albums
+        # return a list of album objects
+        
+        # search for the artist
+        artist = self.search_artist(artist) 
+        search = artist.albums()
+        if search:
+            return search
+        else:
+            return False    
+
     # def get_album_track_urls(self, artist, album):
     #     # user artist object to get all tracks from an artist's albums
     #     # return a list of album objects

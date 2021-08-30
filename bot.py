@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.utils import get
+from discord_components import Select, SelectOption, ComponentsBot
 from plex_utils import Plex
 from player import Player
 import yaml
@@ -20,8 +21,9 @@ PLEX_SERVER = configs['plex_server']
 PLEX_USER = configs['plex_user']
 PLEX_PASSWORD = configs['plex_password']
 
-# discord client object
-client = commands.Bot(command_prefix = '/')
+# discord bot object
+# bot = commands.Bot(command_prefix = '/')
+bot = ComponentsBot("/")
 
 # Plex object
 plex = Plex(PLEX_SERVER, PLEX_USER, PLEX_PASSWORD)
@@ -42,19 +44,19 @@ def play_next_song(channel):
         # play next song
         channel.play(discord.FFmpegOpusAudio(url), after=lambda e: play_next_song(channel))
 
-@client.event
+@bot.event
 async def on_ready():
     logging.info('It\'s alive!')
     
-@client.command(pass_context = True)
+@bot.command(pass_context = True)
 async def sandwich(ctx):
     await ctx.send('Cornbeef on Rye, coming right up!')
 
-@client.command(pass_context = True)
+@bot.command(pass_context = True)
 async def safeword(ctx):
     await ctx.send('Banana')
 
-@client.command(pass_context = True)
+@bot.command(pass_context = True)
 async def join(ctx):
     channel = ctx.message.author.voice.channel
     channel_name = channel.name
@@ -64,60 +66,70 @@ async def join(ctx):
 
     await channel.connect()
 
-@client.command(pass_context = True)
+@bot.command(pass_context = True)
 async def leave(ctx):
     source = ctx.message.author.voice.channel
-    for channel in client.voice_clients:
+    for channel in bot.voice_bots:
         if channel.channel == source:
             await channel.disconnect()
 
-@client.command(pass_context = True)
-async def play(ctx, args):
+@bot.command(pass_context = True)
+async def play(ctx, *, args):
     # get the channel the command came from
-    channel = get(client.voice_clients, guild=ctx.guild)
-    channel_name = channel.channel
+#    channel = get(bot.voice_bots, guild=ctx.guild)
+#    channel_name = channel.channel
 
-    # get a list of songs to play
-    tracks = plex.get_all_artist_track_urls(args)
-    
-    if not tracks:
-        await ctx.send(f'No songs found for {args}')
-    else:
-        # add the songs to the channel's queue
-        song_queue[channel_name] = tracks
+    artists = plex.get_artist(args)
+    select_options = []
+    for index, artist in enumerate(artists):
+        select_options.append(SelectOption(label=artist.title, value=index))
 
-        # play songs in the channel queue
-        play_next_song(channel)
+    await ctx.send(
+        "==== I found multiple artists ====\n Select one from the menu below:", 
+        components=[
+            Select(
+                placeholder="Select and artist",
+                options=select_options,
+                custom_id="select1",
+            ),
+        ],
+    )
+                
+    interaction = await bot.wait_for(
+        "select_option", check=lambda inter: inter.custom_id == "select1"
+    )
+    await interaction.send(content=f"{interaction.values[0]} selected!", ephemeral=False)
 
-@client.command(pass_context = True)
+
+@bot.command(pass_context = True)
 async def pause(ctx):
     # get the channel the command came from
     source = ctx.message.author.voice.channel
 
     # of all the channels the bot is connected to,
     # find the one that matches the source of the command
-    for channel in client.voice_clients:
+    for channel in bot.voice_bots:
         if channel.channel == source:
             # get the player and pause the song
             channel.pause()
 
-@client.command(pass_context = True)
+@bot.command(pass_context = True)
 async def stop(ctx):
     # get the channel the command came from
-    channel = get(client.voice_clients, guild=ctx.guild)
+    channel = get(bot.voice_bots, guild=ctx.guild)
     channel_name = channel.channel
 
     # stop playback
     channel.stop()
 
-@client.command(pass_context = True)
+@bot.command(pass_context = True)
 async def resume(ctx):
     # get the channel the command came from
     source = ctx.message.author.voice.channel
 
     # of all the channels the bot is connected to,
     # find the one that matches the source of the command
-    for channel in client.voice_clients:
+    for channel in bot.voice_bots:
         if channel.channel == source:
             # get the player and resume the song
             channel.resume()
@@ -125,4 +137,4 @@ async def resume(ctx):
 #=========================
 # Run the discord bot
 #=========================
-client.run(DISCORD_TOKEN)
+bot.run(DISCORD_TOKEN)
