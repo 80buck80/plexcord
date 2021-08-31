@@ -25,6 +25,9 @@ class Plex():
         self.plex = self.account.resource(server).connect()
         self.library = self.plex.library.section('Music')
 
+    def get_all_artists(self):
+        # Return a list of all artists in the Plex Music Library
+        return self.library.all()
 
     def get_artist(self, artist):
         # user artist arg to search library for an artist
