@@ -225,8 +225,11 @@ async def resume(ctx):
 async def search(ctx, *, args):
     # Searches for and prints out a list of artists
     results = plex.get_artist(args)
-    for artist in results:
-        await ctx.send(artist.title)
+    if results:
+        for artist in results:
+            await ctx.send(artist.title)
+    else:
+        await ctx.send(f"No results found for {args}")
 
     
 
